@@ -1,10 +1,7 @@
 name: Build and Push Docker Image
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # Runs daily at 06:00 UTC (08:00 CEST)
-  workflow_dispatch:     # Allows manual trigger from GitHub UI
-
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -19,9 +16,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Remove existing builder
+        run: docker buildx rm default || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: suhwak/resourcespace:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
